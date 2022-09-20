@@ -1,17 +1,18 @@
-const { Telegraf } = require("telegraf")
+const { Telegraf } = require("telegraf");
 const { getRandomId } = require("./pictures.js")
-const { TOKEN } = require("./config.js")
+const imageSearch = require('image-search-google');
+const { telegrafKey, gcsId, gcsApiKey } = require("./config.js");
+const gcsClient = new imageSearch(gcsId, gcsApiKey);
+const bot = new Telegraf(telegrafKey);
 
-const bot = new Telegraf(TOKEN);
 
-
-const regex = new RegExp('baker', 'i')
+const regex = new RegExp('\W*(baker|mayfield)\W*')
 
 bot.command("start", (ctx) => {
   console.log(ctx.from)
   bot.telegram.sendMessage(
     ctx.chat.id,
-    "oi, cunt.",
+    "oi, cunt",
     {}
   )
 })
@@ -19,8 +20,16 @@ bot.command("start", (ctx) => {
 
 
 bot.hears(regex, async (ctx) => {
-  const pictureId = await getRandomId()
-  bot.telegram.sendPhoto(ctx.chat.id, { source: `./res/${pictureId}.jpg` })
+  gcsClient.search('Baker Mayfield', {page: 1, size: 'large'}).then(async images => {
+    const index = Math.floor(Math.random() * (images.length + 1));
+    const url = images[index]?.url;
+    if(url) {
+      bot.telegram.sendPhoto(ctx.chat.id, {url})
+    } else {
+        const pictureId = await getRandomId()
+        bot.telegram.sendPhoto(ctx.chat.id, { source: `./res/${pictureId}.jpg` })
+    }
+  }).catch(err => console.error(err));
 })
 
-bot.launch()
+bot.launch();
