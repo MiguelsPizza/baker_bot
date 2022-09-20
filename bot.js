@@ -1,5 +1,8 @@
 const { Telegraf } = require("telegraf")
 const { getRandomId } = require("./pictures.js")
+const { TOKEN } = require("./config.js")
+
+const bot = new Telegraf(TOKEN);
 
 
 const regex = new RegExp('baker', 'i')
@@ -12,6 +15,7 @@ bot.command("start", (ctx) => {
     {}
   )
 })
+
 
 
 bot.hears(regex, async (ctx) => {
