@@ -6,7 +6,7 @@ const gcsClient = new imageSearch(gcsId, gcsApiKey);
 const bot = new Telegraf(telegrafKey);
 
 
-const regex = new RegExp('\W*(baker|mayfield)\W*')
+const regex = new RegExp('\W*(baker|mayfield)\W*', 'i')
 
 bot.command("start", (ctx) => {
   console.log(ctx.from)
