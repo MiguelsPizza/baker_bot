@@ -1,7 +1,6 @@
 import { Telegraf } from "telegraf";
-import { telegrafKey } from "./config.js";
 import { buildPrompt } from './prompt-builder.js'
-const bot = new Telegraf(telegrafKey);
+const bot = new Telegraf(process.env.TELEGRAF_KEY);
 
 bot.on('text', async (ctx) => {
   // Explicit usage
