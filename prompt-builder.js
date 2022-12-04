@@ -12,14 +12,8 @@ const openai = new OpenAIApi(configuration);
 
 export async function buildPrompt(prompt, temperature) {
     const config = {
-        model: 'text-davinci-002', prompt, temperature, max_tokens: 1000
+        model: 'text-davinci-002', prompt, temperature, max_tokens: 50
     }
-
     const completion = await openai.createCompletion(config);
-    console.log(completion.data.choices);
+    return completion.data.choices[0].text;
 }
-reader.question('Enter a prompt:\n', async (prompt) => {
-    await buildPrompt('What would Baker Mayfield say after a loss?', 0.5);
-})
-// const prompt = prompt("What would Baker do?");
-// await buildPrompt(prompt, 0.5);
