@@ -6,7 +6,7 @@ const gcsClient = new imageSearch(gcsId, gcsApiKey);
 const bot = new Telegraf(telegrafKey);
 
 
-const regex = new RegExp('\W*(baker|mayfield)\W*', 'i')
+const regex = new RegExp('\W*(baker|mayfield|sucks|qb|feces|bot|clown)\W*', 'i')
 
 bot.command("start", (ctx) => {
   console.log(ctx.from)
@@ -20,14 +20,23 @@ bot.command("start", (ctx) => {
 
 
 bot.hears(regex, async (ctx) => {
-  gcsClient.search('Baker Mayfield', {page: 1, size: 'large'}).then(async images => {
+  gcsClient.search('Baker Mayfield is trash', {page: 1, size: 'large'}).then(async images => {
     const index = Math.floor(Math.random() * (images.length + 1));
     const url = images[index]?.url;
     if(url) {
-      bot.telegram.sendPhoto(ctx.chat.id, {url})
+      try {
+        bot.telegram.sendPhoto(ctx.chat.id, {url})
+      } catch(e) {
+        console.error(e);
+      }
+
     } else {
         const pictureId = await getRandomId()
-        bot.telegram.sendPhoto(ctx.chat.id, { source: `./res/${pictureId}.jpg` })
+        try {
+          bot.telegram.sendPhoto(ctx.chat.id, { source: `./res/${pictureId}.jpg` })
+        } catch(e) {
+          console.error(e);
+        }
     }
   }).catch(err => console.error(err));
 })
