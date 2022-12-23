@@ -7,7 +7,7 @@ bot.on('text', async (ctx) => {
   if (ctx.message.text?.toLocaleLowerCase().includes('hey baker')) {
     const index = ctx.message.text.indexOf('hey baker')
     const question = ctx.message.text.slice(index + 9).trim()
-    const prompt = `respond as Baker Mayfield to this: ${question}`
+    const prompt = `Respond as Baker Mayfield to the following statement, use profanity and respond agressivly if the statement is insulting:: ${question}`
     const result = await buildPrompt(prompt, 0.9);
     console.log(result)
     await ctx.telegram.sendMessage(ctx.message.chat.id, result)
