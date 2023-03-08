@@ -1,17 +1,23 @@
 import { Telegraf } from "telegraf";
 import { buildPrompt } from './prompt-builder.js'
-const bot = new Telegraf(process.env.telegrafKey);
+const bot = new Telegraf(
+  process?.env?.telegrafKey ?? "5573440835:AAE8vQwwLQQw6ovO00Yskz_V00F5MluStb8"
+)
 
-bot.on('text', async (ctx) => {
+const queue = []
+
+bot.on("text", async (ctx) => {
   // Explicit usage
-  if (ctx.message.text?.toLocaleLowerCase().includes('hey baker')) {
-    const index = ctx.message.text.indexOf('hey baker')
-    const question = ctx.message.text.slice(index + 9).trim()
-    const prompt = `Respond as Baker Mayfield to the following statement, use profanity and respond agressivly if the statement is insulting:: ${question}`
-    const result = await buildPrompt(prompt, 0.9);
-    console.log(result)
-    await ctx.telegram.sendMessage(ctx.message.chat.id, result)
+  queue.push({ role: "user", content: ctx.message.text })
+
+  if (ctx.message.text?.toLocaleLowerCase().includes("hey baker")) {
+    const result = await buildPrompt(queue)
+    await ctx.telegram.sendMessage(ctx.message.chat.id, result.content)
+    queue.push(result)
   }
-});
+
+  if (queue.length > 10) queue.shift()
+})
+
 
 bot.launch();
