@@ -3,7 +3,6 @@ import { message } from 'telegraf/filters';
 import { ChatCompletionRequestMessage } from "openai";
 import { buildPrompt, generateOpenaiImage, vetInput } from "./prompt-builder.js";
 import config from "./config";
-import { InputFile } from "telegraf/typings/core/types/typegram.js";
 
 const bot = new Telegraf(config.telegrafKey);
 
