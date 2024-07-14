@@ -113,3 +113,20 @@ export const calculateMagnitude = (vec: number[]): number => {
     return 0;
   }
 };
+
+
+export const generateOpenaiImage = async (promptString: string) => {
+  try {
+    const prompt: string = `NFL quarterback Baker Mayfield Doing the following: ${promptString}
+    `
+    const { data } = await openai.createImage({
+      prompt: prompt ?? "Baker mayfield doing some dumb shit",
+      n: 1,
+      size: "256x256",
+      // response_format: 'b64_json'
+    });
+    return data.data[0]?.url
+  } catch (error) {
+    console.error(error)
+  }
+}
