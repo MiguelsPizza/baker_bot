@@ -1,7 +1,7 @@
-import { Telegraf, Context } from "telegraf";
+import { Telegraf } from "telegraf";
 import { message } from 'telegraf/filters';
-import { ChatCompletionRequestMessage } from "openai";
 import { buildPrompt, generateOpenaiImage, vetInput } from "./prompt-builder.js";
+import { ChatCompletionRequestMessage } from 'openai';
 import config from "./config";
 
 const bot = new Telegraf(config.telegrafKey);
