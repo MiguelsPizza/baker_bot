@@ -20,7 +20,7 @@ bot.on(message("text"), async (ctx) => {
 
     queue.push({ role: "user", content: messageText });
 
-    if (true) {  // Consider replacing this condition with a meaningful check
+    if (await vetInput(messageText)) {
       console.debug('Processing message');
       const result = await buildPrompt(queue);
       if (result) {

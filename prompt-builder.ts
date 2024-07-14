@@ -94,7 +94,7 @@ export const cosineSimilarity = (vec1: number[], vec2: number[]): boolean => {
 
     const dotProduct = vec1.reduce((acc, val, i) => acc + val * vec2[i]!, 0);
     const similarity = dotProduct / (calculateMagnitude(vec1) * calculateMagnitude(vec2));
-    return similarity > 0.9;
+    return similarity > 0.1;
   } catch (error) {
     console.error("Error in cosineSimilarity:", error);
     return false;
