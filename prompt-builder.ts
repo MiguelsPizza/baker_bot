@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi, CreateChatCompletionRequest, CreateEmbeddingRequest, CreateEmbeddingResponse, ChatCompletionRequestMessage, ChatCompletionResponseMessage } from "openai";
-import config from "./config.js";
+import config from "./config";
 
 const configuration = new Configuration({
   // @ts-ignore

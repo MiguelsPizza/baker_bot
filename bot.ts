@@ -1,6 +1,6 @@
 import { Telegraf, Context } from "telegraf";
 import { buildPrompt, vetInput } from "./prompt-builder.js";
-import config from "./config.js";
+import config from "./config";
 import { ChatCompletionRequestMessage } from "openai";
 
 const bot = new Telegraf(config.telegrafKey);
@@ -14,7 +14,8 @@ bot.on("text", async (ctx: Context) => {
 
   queue.push({ role: "user", content: messageText });
 
-  if (await vetInput(messageText)) {
+  if (true) {
+    console.log('here')
     const result = await buildPrompt(queue);
     if (result) {
       await ctx.telegram.sendMessage(ctx.message!.chat.id, result.content!);
