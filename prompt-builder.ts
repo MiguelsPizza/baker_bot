@@ -3,7 +3,7 @@ import config from "./config";
 
 const configuration = new Configuration({
   // @ts-ignore
-  apiKey: process?.env?.openAiKey! ?? config.openaiToken
+  apiKey: config.openaiToken
 });
 const openai = new OpenAIApi(configuration);
 
