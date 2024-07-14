@@ -16,7 +16,7 @@ export async function buildPrompt(queue: ChatCompletionRequestMessage[]): Promis
     console.log(`Building prompt with ${queue.length} messages`);
 
     const config: CreateChatCompletionRequest = {
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
