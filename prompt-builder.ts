@@ -1,13 +1,11 @@
-import { Configuration, OpenAIApi, CreateChatCompletionRequest, CreateEmbeddingResponse, ChatCompletionRequestMessage, ChatCompletionResponseMessage } from "openai";
+import OpenAI from "openai";
 import config from "./config";
 
-const configuration = new Configuration({
-  // @ts-ignore
+const openai = new OpenAI({
   apiKey: config.openaiToken
 });
-const openai = new OpenAIApi(configuration);
 
-export async function buildPrompt(queue: ChatCompletionRequestMessage[]): Promise<ChatCompletionResponseMessage | null> {
+export async function buildPrompt(queue: OpenAI.Chat.ChatCompletionMessageParam[]): Promise<OpenAI.Chat.ChatCompletionMessage | null> {
   try {
     if (!Array.isArray(queue) || queue.length === 0) {
       throw new Error("Invalid input: queue must be a non-empty array");
@@ -15,7 +13,7 @@ export async function buildPrompt(queue: ChatCompletionRequestMessage[]): Promis
 
     console.log(`Building prompt with ${queue.length} messages`);
 
-    const config: CreateChatCompletionRequest = {
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -25,22 +23,19 @@ export async function buildPrompt(queue: ChatCompletionRequestMessage[]): Promis
         },
         ...queue
       ]
-    };
+    });
 
-    const completion = await openai.createChatCompletion(config);
-    if (!completion || !completion.data || !completion.data.choices || !completion.data.choices[0] || !completion.data.choices[0].message) {
+    if (!completion.choices[0]?.message) {
       throw new Error("Invalid response from OpenAI API");
     }
 
     console.log("Successfully generated response from OpenAI");
-    return completion.data.choices[0].message;
+    return completion.choices[0].message;
   } catch (error) {
     console.error("Error in buildPrompt:", error);
     return null;
   }
 }
-
-let promptAnchorEmbedding: CreateEmbeddingResponse | null = null;
 
 export async function vetInput(input: string): Promise<boolean> {
   try {
@@ -48,85 +43,70 @@ export async function vetInput(input: string): Promise<boolean> {
       throw new Error("Invalid input: input must be a non-empty string");
     }
 
-    console.log("Generating embedding for input");
-    const response = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: input
+    console.log("Vetting input using GPT-4");
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an AI assistant that determines if a message is related to football and if Baker Mayfield should respond to it."
+        },
+        {
+          role: "user",
+          content: input
+        }
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "shouldRespond",
+            description: "Determine if Baker Mayfield should respond to the message",
+            parameters: {
+              type: "object",
+              properties: {
+                shouldRespond: {
+                  type: "boolean",
+                  description: "True if the message is related to football and Baker Mayfield should respond, false otherwise"
+                },
+                reason: {
+                  type: "string",
+                  description: "A brief explanation of why Baker Mayfield should or should not respond"
+                }
+              },
+              required: ["shouldRespond", "reason"]
+            }
+          }
+        }
+      ],
+      tool_choice: { type: "function", function: { name: "shouldRespond" } }
     });
-
-    if (!response || !response.data || !response.data.data || !response.data.data[0] || !response.data.data[0].embedding) {
-      throw new Error("Invalid response from OpenAI API for input embedding");
+    console.log({response: JSON.stringify(response)})
+    if (!response.choices[0].message.tool_calls) {
+      throw new Error("Invalid response from GPT-4");
     }
 
-    if (!promptAnchorEmbedding) {
-      console.log("Generating prompt anchor embedding");
-      const res = await openai.createEmbedding({
-        model: "text-embedding-ada-002",
-        input:
-          "You are a chatbot emulating NFL quarterback Baker Mayfield. You exist inside of a telegram groupchat. You should feel free to respond in whatever manner you deem fit. You are encouraged to use profanity and respond aggressively if the statement is insulting. Since it has been a few years since you were trained, the year is 2023, Baker Mayfield was dropped by the Browns and played the 2022 season on the Panthers. He was dropped by near the end of the season and his contract and was picked up by the Rams. This input will be used to generate an embedding that will be used to compare the embedding of the most recent message in the group chat to determine whether it is a good time for you to interject."
-      });
-
-      promptAnchorEmbedding = res.data;
-
-      if (!promptAnchorEmbedding || !promptAnchorEmbedding.data || !promptAnchorEmbedding.data[0] || !promptAnchorEmbedding.data[0].embedding) {
-        throw new Error("Invalid response from OpenAI API for prompt anchor embedding");
-      }
-    }
-
-    const similarity = cosineSimilarity(
-      response.data.data[0].embedding,
-      promptAnchorEmbedding.data[0]!.embedding
-    );
-
-    console.log(`Input similarity: ${similarity}`);
-    return similarity;
+    const toolCall = response.choices[0].message.tool_calls[0];
+    const result = JSON.parse(toolCall.function.arguments);
+    console.log(`Should respond: ${result.shouldRespond}, Reason: ${result.reason}`);
+    return result.shouldRespond;
   } catch (error) {
     console.error("Error in vetInput:", error);
     return false;
   }
 }
 
-export const cosineSimilarity = (vec1: number[], vec2: number[]): boolean => {
-  try {
-    if (!Array.isArray(vec1) || !Array.isArray(vec2) || vec1.length !== vec2.length) {
-      throw new Error("Invalid input vectors for cosine similarity");
-    }
-
-    const dotProduct = vec1.reduce((acc, val, i) => acc + val * vec2[i]!, 0);
-    const similarity = dotProduct / (calculateMagnitude(vec1) * calculateMagnitude(vec2));
-    return similarity > 0.1;
-  } catch (error) {
-    console.error("Error in cosineSimilarity:", error);
-    return false;
-  }
-};
-
-export const calculateMagnitude = (vec: number[]): number => {
-  try {
-    if (!Array.isArray(vec) || vec.length === 0) {
-      throw new Error("Invalid input vector for magnitude calculation");
-    }
-
-    return Math.sqrt(vec.reduce((acc, val) => acc + val ** 2, 0));
-  } catch (error) {
-    console.error("Error in calculateMagnitude:", error);
-    return 0;
-  }
-};
-
-
 export const generateOpenaiImage = async (promptString: string) => {
   try {
-    const prompt: string = `NFL quarterback Baker Mayfield Doing the following: ${promptString}
-    `
-    const { data } = await openai.createImage({
+    const prompt: string = `NFL quarterback Baker Mayfield Doing the following: ${promptString}`;
+    const response = await openai.images.generate({
+      model: "dall-e-2",
       prompt: prompt ?? "Baker mayfield doing some dumb shit",
       n: 1,
-      size: "256x256",
-      // response_format: 'b64_json'
-    });
-    return data.data[0]?.url
+     });
+    // console.log(response)
+    return response.data[0]?.url;
   } catch (error) {
-    console.error(error)
+    console.error(error.message);
   }
 }

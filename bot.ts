@@ -1,19 +1,19 @@
 import { Telegraf } from "telegraf";
 import { message } from 'telegraf/filters';
 import { buildPrompt, generateOpenaiImage, vetInput } from "./prompt-builder.js";
-import { ChatCompletionRequestMessage } from 'openai';
 import config from "./config";
+import { OpenAI } from "openai";
 
 const bot = new Telegraf(config.telegrafKey);
 
-const queue: ChatCompletionRequestMessage[] = [];
+const queue: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 const PROMPT = 'show me baker'
-
+console.log('hello from the api')
 bot.on(message("text"), async (ctx) => {
 
   try {
     const messageText = ctx.message.text.toLowerCase();
-    console.log({messageText})
+    console.log({ messageText })
     if (!messageText) {
       console.warn('Received empty message');
       return;
@@ -64,8 +64,13 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-bot.launch().then(() => {
-  console.log('Bot started');
-}).catch((error) => {
-  console.error('Failed to start bot:', error);
-});
+// if (process.env.NODE_ENV === 'LOCAL') {
+  bot.launch().then(() => {
+    console.log('Bot started');
+  }).catch((error) => {
+    console.error('Failed to start bot:', error);
+  });
+// }
+
+export const url = bot.webhookCallback("/telegraf")
+console.log({ url })
