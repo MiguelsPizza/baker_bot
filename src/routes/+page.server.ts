@@ -1,35 +1,61 @@
-import fs from 'fs';
-import path from 'path';
+import { Resource } from "sst";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+
+const s3Client = new S3Client({});
 
 export const actions = {
-  default: async ({ request, params }: any) => {
+  default: async ({ request }: any) => {
     const formData = await request.formData();
-    const model = formData.get('model');
+    const content = formData.get('model');
+    const imagePrompt = formData.get('imagePrompt');
 
-    if (!model) {
+    if (!content && !imagePrompt) {
       return {
         error: { message: 'Model could not be updated' }
       };
     }
 
-    const filePath = './lib/model.txt';
-    const dirPath = path.dirname(filePath);
-
     try {
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
+      const key = 'model.txt';
+      const putCommand = new PutObjectCommand({
+        Bucket: Resource.MyBucket.name,
+        Key: key,
+        Body: JSON.stringify({ content, imagePrompt }),
+        ContentType: 'application/json'
+      });
 
-      fs.writeFileSync(filePath, JSON.stringify({ content: model }), 'utf-8');
+      await s3Client.send(putCommand);
 
       return {
         success: { message: 'Model has been updated.' }
       };
     } catch (error) {
-      console.error('Error writing file:', error);
+      console.error('Error writing to S3:', error);
       return {
         error: { message: 'Failed to update model' }
       };
     }
   }
 };
+
+export const load = async () => {
+  try {
+    const key = 'model.txt';
+    const getCommand = new GetObjectCommand({
+      Bucket: Resource.MyBucket.name,
+      Key: key
+    });
+
+    const response = await s3Client.send(getCommand);
+    const modelData = await response.Body?.transformToString();
+
+    return {
+      model: modelData ? JSON.parse(modelData) : null
+    };
+  } catch (error) {
+    console.error('Error reading from S3:', error);
+    return {
+      model: null
+    };
+  }
+}

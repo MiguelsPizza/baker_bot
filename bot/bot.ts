@@ -1,7 +1,7 @@
 import { Telegraf } from "telegraf";
 import { message } from 'telegraf/filters';
 import { buildPrompt, generateOpenaiImage, vetInput } from "./prompt-builder.js";
-import config from "./config";
+import config from "../config.js";
 import { OpenAI } from "openai";
 
 const bot = new Telegraf(config.telegrafKey);
@@ -72,5 +72,38 @@ process.on('uncaughtException', (error) => {
   });
 // }
 
-export const url = bot.webhookCallback("/telegraf")
-console.log({ url })
+// Lambda handler
+export const handler = async (event, context) => {
+  console.log('Lambda function invoked with event:', JSON.stringify(event));
+  try {
+    // Parse the incoming update from Telegram
+    const body = JSON.parse(event.body || '{}');
+    console.log('Parsed Telegram update:', JSON.stringify(body));
+
+    // Process the update
+    console.log('Processing update with bot.handleUpdate');
+    await bot.handleUpdate(body);
+    console.log('Update processed successfully');
+
+    console.log('Returning success response');
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Success' }),
+    };
+  } catch (error) {
+    console.error('Error processing Lambda event:', error);
+    console.log('Error details:', error.message);
+    console.log('Error stack:', error.stack);
+    console.log('Returning error response');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Internal Server Error', error: error.message }),
+    };
+  } finally {
+    console.log('Lambda function execution completed');
+  }
+};
+
+// Initialize the bot (this will run when the Lambda cold starts)
+bot.telegram.setWebhook(`https://te4wmw3yvh.execute-api.us-east-1.amazonaws.com/telegraf`);
+console.log('Webhook set for Telegram bot');

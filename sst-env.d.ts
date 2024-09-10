@@ -11,6 +11,10 @@ declare module "sst" {
       "type": "sst.aws.SvelteKit"
       "url": string
     }
+    "MyBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
   }
 }
 export {}
